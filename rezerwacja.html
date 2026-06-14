@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rezerwacja – Hello Malta</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1c3f6e;min-height:100vh}
+
+.header{background:#1c3f6e;padding:14px 20px;display:flex;align-items:center;gap:14px}
+.header a{color:#fff;text-decoration:none;font-size:13px;opacity:.8}
+.header a:hover{opacity:1}
+.header-title{color:#fff;font-size:17px;font-weight:700;flex:1;text-align:center}
+
+.container{max-width:600px;margin:0 auto;padding:20px 16px}
+
+/* STEPS */
+.steps{display:flex;justify-content:center;align-items:center;gap:0;padding:20px 0 8px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#aaa;min-width:70px}
+.step.active{color:#1c3f6e;font-weight:700}
+.step.done{color:#27ae60}
+.step-num{width:30px;height:30px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.step.active .step-num{border-color:#1c3f6e;background:#1c3f6e;color:#fff}
+.step.done .step-num{border-color:#27ae60;background:#27ae60;color:#fff}
+.step-sep{flex:1;height:2px;background:#ddd;max-width:40px}
+
+/* CARD */
+.card{background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:16px;overflow:hidden}
+.card-head{background:#1c3f6e;color:#fff;padding:13px 18px;font-size:14px;font-weight:700;letter-spacing:.3px}
+.card-body{padding:18px}
+
+/* TOUR SELECT */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.form-group select, .form-group input{width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:14px;color:#1c3f6e;outline:none;transition:border .2s;background:#fff}
+.form-group select:focus, .form-group input:focus{border-color:#1c3f6e}
+
+/* PERSONS */
+.persons-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.person-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.person-row:last-child{border-bottom:none}
+.person-info{}
+.person-lbl{font-size:14px;color:#222;font-weight:500}
+.person-price{font-size:12px;color:#888;margin-top:2px}
+.qty-ctrl{display:flex;align-items:center;gap:12px}
+.qty-btn{width:34px;height:34px;border-radius:50%;border:2px solid #1c3f6e;background:#fff;color:#1c3f6e;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s}
+.qty-btn:hover:not(:disabled){background:#1c3f6e;color:#fff}
+.qty-btn:disabled{border-color:#ddd;color:#ddd;cursor:default}
+.qty-num{font-size:17px;font-weight:800;min-width:22px;text-align:center;color:#1c3f6e}
+
+/* SUMMARY */
+.sum-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
+.sum-row:last-child{border-bottom:none}
+.sum-lbl{color:#555}
+.sum-val{font-weight:700;color:#1c3f6e}
+.total-row{display:flex;justify-content:space-between;align-items:center;background:#1c3f6e;color:#fff;border-radius:7px;padding:14px 18px;margin:16px 0}
+.total-lbl{font-size:13px;opacity:.8}
+.total-val{font-size:24px;font-weight:900}
+
+/* CONTACT */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:460px){.form-row{grid-template-columns:1fr}}
+
+/* BUTTONS */
+.btn-main{display:block;width:100%;padding:15px;background:#e89020;color:#fff;border:none;border-radius:7px;font-size:16px;font-weight:800;cursor:pointer;text-align:center;transition:background .2s;margin-bottom:10px}
+.btn-main:hover:not(:disabled){background:#d07d10}
+.btn-main:disabled{background:#ccc;cursor:default}
+.btn-back{background:none;border:none;color:#888;font-size:13px;cursor:pointer;display:block;width:100%;text-align:center;padding:6px}
+.btn-back:hover{color:#1c3f6e}
+
+/* PAY BUTTON */
+.btn-pay{display:block;width:100%;padding:15px;background:#191c33;color:#fff;border:none;border-radius:7px;font-size:16px;font-weight:800;cursor:pointer;text-align:center;transition:background .2s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-pay:hover:not(:disabled){background:#2d3160}
+.btn-pay:disabled{background:#ccc;cursor:default}
+
+.secure-note{text-align:center;font-size:11px;color:#aaa;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:5px}
+
+/* ALERT */
+.alert{padding:10px 14px;border-radius:5px;font-size:13px;margin-bottom:12px;display:none}
+.alert-err{background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b}
+
+/* LOADING */
+.loading{display:none;text-align:center;padding:24px}
+.spinner{width:38px;height:38px;border:4px solid #eee;border-top-color:#1c3f6e;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SUCCESS */
+.success{display:none;text-align:center;padding:40px 20px}
+.success-icon{font-size:64px;margin-bottom:12px}
+.success-title{font-size:22px;font-weight:800;color:#27ae60;margin-bottom:8px}
+.success-text{font-size:14px;color:#555;line-height:1.7}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">← Powrót</a>
+  <div class="header-title">Rezerwacja</div>
+  <div style="min-width:60px"></div>
+</div>
+
+<div class="steps">
+  <div class="step active" id="si1"><div class="step-num">1</div><span>Wycieczka</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="si2"><div class="step-num">2</div><span>Dane</span></div>
+  <div class="step-sep"></div>
+  <div class="step" id="si3"><div class="step-num">3</div><span>Płatność</span></div>
+</div>
+
+<div class="container">
+
+  <!-- KROK 1 -->
+  <div class="page active" id="p1">
+    <div class="card">
+      <div class="card-head">Wybierz wycieczkę i datę</div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Wycieczka</label>
+          <select id="sel-tour" onchange="onTourChange()">
+            <option value="">-- wybierz wycieczkę --</option>
+            <option value="0">Gozo &amp; Comino</option>
+            <option value="1">Comino – Blue Lagoon</option>
+            <option value="2">3 Islands Cruise (Premium)</option>
+            <option value="3">Rejs o Zachodzie Słońca na Comino z Otwartym Barem</option>
+            <option value="4">Full Day Gozo – Polski Przewodnik</option>
+            <option value="5">Full Day Malta – Polski Przewodnik</option>
+            <option value="6">Harbour Cruise</option>
+            <option value="7">Hop On Hop Off – North</option>
+            <option value="8">Hop On Hop Off – South</option>
+            <option value="9">Hop On Hop Off – Gozo</option>
+            <option value="10">Power Speed Boats – Comino</option>
+            <option value="11">Power Speed Boats – Gozo &amp; Comino</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="inp-date" onchange="updateTotal()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="card-persons" style="display:none">
+      <div class="card-head">Liczba osób</div>
+      <div class="card-body">
+        <div id="persons-list"></div>
+      </div>
+    </div>
+
+    <div class="card" id="card-summary" style="display:none">
+      <div class="card-head">Podsumowanie</div>
+      <div class="card-body">
+        <div id="summary-rows"></div>
+        <div class="total-row">
+          <div><div class="total-lbl">Łącznie do zapłaty</div></div>
+          <div class="total-val" id="total-val">€0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-err" id="err1"></div>
+    <button class="btn-main" id="btn1" onclick="goStep2()" disabled>Dalej – Dane kontaktowe →</button>
+  </div>
+
+  <!-- KROK 2 -->
+  <div class="page" id="p2">
+    <div class="card">
+      <div class="card-head">Twoje dane</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group"><label>Imię</label><input type="text" id="f-name" placeholder="Jan"></div>
+          <div class="form-group"><label>Nazwisko</label><input type="text" id="f-surname" placeholder="Kowalski"></div>
+        </div>
+        <div class="form-group"><label>E-mail</label><input type="email" id="f-email" placeholder="jan@email.com"></div>
+        <div class="form-group"><label>Telefon</label><input type="tel" id="f-phone" placeholder="+48 600 000 000"></div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">Podsumowanie zamówienia</div>
+      <div class="card-body">
+        <div class="sum-row"><span class="sum-lbl">Wycieczka</span><span class="sum-val" id="rev-tour" style="text-align:right;max-width:60%"></span></div>
+        <div class="sum-row"><span class="sum-lbl">Data</span><span class="sum-val" id="rev-date"></span></div>
+        <div id="rev-persons"></div>
+        <div class="total-row" style="margin-top:12px">
+          <div class="total-lbl">Do zapłaty</div>
+          <div class="total-val" id="rev-total"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-err" id="err2"></div>
+    <button class="btn-main" onclick="goStep3()">Dalej – Płatność →</button>
+    <button class="btn-back" onclick="goStep(1)">← Wróć</button>
+  </div>
+
+  <!-- KROK 3 -->
+  <div class="page" id="p3">
+    <div class="card">
+      <div class="card-head">Płatność</div>
+      <div class="card-body">
+
+        <div class="sum-row"><span class="sum-lbl">Wycieczka</span><span class="sum-val" id="pay-tour" style="text-align:right;max-width:65%"></span></div>
+        <div class="sum-row"><span class="sum-lbl">Data</span><span class="sum-val" id="pay-date"></span></div>
+        <div class="sum-row"><span class="sum-lbl">Osób</span><span class="sum-val" id="pay-persons"></span></div>
+        <div class="total-row" style="margin-top:8px">
+          <div class="total-lbl">Łącznie</div>
+          <div class="total-val" id="pay-total"></div>
+        </div>
+
+        <div class="loading" id="loading"><div class="spinner"></div><div style="color:#666;font-size:13px">Łączenie z Revolut...</div></div>
+
+        <div class="alert alert-err" id="err3"></div>
+
+        <button class="btn-pay" id="btn-pay" onclick="doPayment()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="#fff" stroke-width="2"/><path d="M2 10h20" stroke="#fff" stroke-width="2"/></svg>
+          Zapłać <span id="pay-btn-amount"></span> przez Revolut
+        </button>
+        <div class="secure-note">🔒 Bezpieczna płatność · SSL · Revolut</div>
+
+        <div class="success" id="success">
+          <div class="success-icon">✅</div>
+          <div class="success-title">Rezerwacja potwierdzona!</div>
+          <div class="success-text">Potwierdzenie wysłaliśmy na<br><strong id="suc-email"></strong><br><br>Do zobaczenia na Malcie! 🌊<br><br><a href="index.html" style="color:#1c3f6e;font-weight:700">← Wróć na stronę główną</a></div>
+        </div>
+
+        <button class="btn-back" onclick="goStep(2)">← Wróć</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TOURS = [
+  {title:'Gozo & Comino', prices:[["Dorośli","€42",42],["Dzieci (5–15 lat)","€30",30],["Dzieci poniżej 5 lat","Bezpłatnie",0]]},
+  {title:'Comino – Blue Lagoon', prices:[["Dorośli","€30",30],["Dzieci (5–15 lat)","€20",20],["Dzieci poniżej 5 lat","Bezpłatnie",0]]},
+  {title:'3 Islands Cruise (Premium)', prices:[["Dorośli (16+)","€75",75],["Dzieci (5–15 lat)","€50",50],["Dzieci poniżej 5 lat","Bezpłatnie",0]]},
+  {title:'Rejs o Zachodzie Słońca na Comino z Otwartym Barem', prices:[["Dorośli","€30",30],["Dzieci (5–15 lat)","€22",22],["Dzieci poniżej 5 lat","Bezpłatnie",0]]},
+  {title:'Full Day Gozo – Polski Przewodnik', prices:[["Dorośli (13+)","€65",65],["Dzieci (3–12 lat)","€45",45],["Dzieci poniżej 3 lat","Bezpłatnie",0]]},
+  {title:'Full Day Malta – Polski Przewodnik', prices:[["Dorośli (13+)","€60",60],["Dzieci (3–12 lat)","€40",40],["Dzieci poniżej 3 lat","Bezpłatnie",0]]},
+  {title:'Harbour Cruise', prices:[["Dorośli","€20",20],["Dzieci (5–15 lat)","€10",10]]},
+  {title:'Hop On Hop Off – North', prices:[["Dorośli","€25",25],["Dzieci (5–15 lat)","€16",16],["Dzieci poniżej 5 lat","Bezpłatnie",0]]},
+  {title:'Hop On Hop Off – South', prices:[["Dorośli","€25",25],["Dzieci (5–15 lat)","€16",16],["Dzieci poniżej 5 lat","Bezpłatnie",0]]},
+  {title:'Hop On Hop Off – Gozo', prices:[["Dorośli","€25",25],["Dzieci (5–15 lat)","€16",16],["Dzieci poniżej 5 lat","Bezpłatnie",0],["Transport dorosły (dopłata)","€7",7]]},
+  {title:'Power Speed Boats – Comino', prices:[["Dorośli (10+ lat)","€60",60],["Dzieci (poniżej 10 lat)","€45",45]]},
+  {title:'Power Speed Boats – Gozo & Comino', prices:[["Dorośli (10+ lat)","€65",65],["Dzieci (poniżej 10 lat)","€50",50]]},
+];
+
+// Revolut config – uzupełnij gdy masz API key
+const REVOLUT = {
+  backendUrl: 'https://twoja-domena.com/api/create-order', // URL backendu
+};
+
+let qty = [];
+let currentTour = null;
+
+// Ustaw min datę
+document.getElementById('inp-date').min = new Date().toISOString().split('T')[0];
+
+// Wczytaj wycieczkę z URL ?tour=NazwaWycieczki
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const tourName = params.get('tour');
+  if (tourName) {
+    const idx = TOURS.findIndex(t => t.title === tourName);
+    if (idx >= 0) {
+      document.getElementById('sel-tour').value = idx;
+      onTourChange();
+    }
+  }
+});
+
+function onTourChange() {
+  const idx = document.getElementById('sel-tour').value;
+  if (idx === '') { currentTour=null; document.getElementById('card-persons').style.display='none'; document.getElementById('card-summary').style.display='none'; document.getElementById('btn1').disabled=true; return; }
+  currentTour = TOURS[parseInt(idx)];
+  qty = currentTour.prices.map(()=>0);
+  renderPersons();
+  document.getElementById('card-persons').style.display='block';
+  updateTotal();
+}
+
+function renderPersons() {
+  document.getElementById('persons-list').innerHTML = currentTour.prices.map((p,i)=>`
+    <div class="person-row">
+      <div class="person-info">
+        <div class="person-lbl">${p[0]}</div>
+        <div class="person-price">${p[1]} / os.</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="chg(${i},-1)" id="bm${i}" disabled>−</button>
+        <span class="qty-num" id="q${i}">0</span>
+        <button class="qty-btn" onclick="chg(${i},1)">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function chg(i, d) {
+  qty[i] = Math.max(0, qty[i]+d);
+  document.getElementById('q'+i).textContent = qty[i];
+  document.getElementById('bm'+i).disabled = qty[i]===0;
+  updateTotal();
+}
+
+function getTotal() {
+  if (!currentTour) return 0;
+  return currentTour.prices.reduce((s,p,i)=>s+p[2]*qty[i],0);
+}
+
+function updateTotal() {
+  const total = getTotal();
+  const hasP = qty.some(q=>q>0);
+  const hasD = document.getElementById('inp-date').value !== '';
+  if (hasP) {
+    document.getElementById('card-summary').style.display='block';
+    document.getElementById('summary-rows').innerHTML = currentTour.prices.map((p,i)=>qty[i]>0?`<div class="sum-row"><span class="sum-lbl">${qty[i]}× ${p[0]}</span><span class="sum-val">€${p[2]*qty[i]}</span></div>`:'').join('');
+    document.getElementById('total-val').textContent = '€'+total;
+  } else {
+    document.getElementById('card-summary').style.display='none';
+  }
+  document.getElementById('btn1').disabled = !(hasP && hasD);
+}
+
+function fmtDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}.${m}.${y}`; }
+
+function goStep(n) {
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',i===n-1));
+  ['si1','si2','si3'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.className='step'+(i+1===n?' active':i+1<n?' done':'');
+  });
+  window.scrollTo(0,0);
+}
+
+function goStep2() {
+  const err=document.getElementById('err1');
+  if (!document.getElementById('inp-date').value){showErr(err,'Wybierz datę wycieczki.');return;}
+  if (!qty.some(q=>q>0)){showErr(err,'Dodaj co najmniej 1 osobę.');return;}
+  err.style.display='none';
+  document.getElementById('rev-tour').textContent = currentTour.title;
+  document.getElementById('rev-date').textContent = fmtDate(document.getElementById('inp-date').value);
+  document.getElementById('rev-persons').innerHTML = currentTour.prices.map((p,i)=>qty[i]>0?`<div class="sum-row"><span class="sum-lbl">${qty[i]}× ${p[0]}</span><span class="sum-val">€${p[2]*qty[i]}</span></div>`:'').join('');
+  document.getElementById('rev-total').textContent = '€'+getTotal();
+  goStep(2);
+}
+
+function goStep3() {
+  const name=document.getElementById('f-name').value.trim();
+  const sur=document.getElementById('f-surname').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const err=document.getElementById('err2');
+  if(!name||!sur){showErr(err,'Podaj imię i nazwisko.');return;}
+  if(!email||!email.includes('@')){showErr(err,'Podaj poprawny e-mail.');return;}
+  if(!phone){showErr(err,'Podaj numer telefonu.');return;}
+  err.style.display='none';
+  document.getElementById('pay-tour').textContent = currentTour.title;
+  document.getElementById('pay-date').textContent = fmtDate(document.getElementById('inp-date').value);
+  document.getElementById('pay-persons').textContent = qty.reduce((s,q)=>s+q,0)+' os.';
+  const total = getTotal();
+  document.getElementById('pay-total').textContent = '€'+total;
+  document.getElementById('pay-btn-amount').textContent = '€'+total;
+  goStep(3);
+}
+
+async function doPayment() {
+  const err=document.getElementById('err3');
+  err.style.display='none';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('btn-pay').disabled=true;
+
+  const order = {
+    tour: currentTour.title,
+    date: document.getElementById('inp-date').value,
+    persons: currentTour.prices.map((p,i)=>({label:p[0],qty:qty[i],price:p[2]})).filter(p=>p.qty>0),
+    amount_cents: getTotal()*100,
+    currency:'EUR',
+    customer:{
+      name: document.getElementById('f-name').value.trim()+' '+document.getElementById('f-surname').value.trim(),
+      email: document.getElementById('f-email').value.trim(),
+      phone: document.getElementById('f-phone').value.trim(),
+    },
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+
+  try {
+    // ═══════════════════════════════════════════
+    // ODKOMENTUJ GDY MASZ BACKEND REVOLUT:
+    //
+    // const res = await fetch(REVOLUT.backendUrl, {
+    //   method:'POST',
+    //   headers:{'Content-Type':'application/json'},
+    //   body: JSON.stringify(order)
+    // });
+    // const data = await res.json();
+    // window.location.href = data.checkout_url;
+    //
+    // ═══════════════════════════════════════════
+
+    // DEMO – usuń gdy podepniesz Revolut:
+    await new Promise(r=>setTimeout(r,1500));
+    document.getElementById('loading').style.display='none';
+    document.getElementById('btn-pay').style.display='none';
+    document.getElementById('success').style.display='block';
+    document.getElementById('suc-email').textContent = document.getElementById('f-email').value.trim();
+    document.querySelector('.btn-back').style.display='none';
+
+  } catch(e) {
+    document.getElementById('loading').style.display='none';
+    document.getElementById('btn-pay').disabled=false;
+    showErr(err,'Błąd połączenia. Spróbuj ponownie lub skontaktuj się z nami.');
+  }
+}
+
+function showErr(el,msg){el.textContent=msg;el.style.display='block';}
+</script>
+</body>
+</html>
